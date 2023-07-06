@@ -1,0 +1,105 @@
+1********
+Добавил в vbox диск
+vanadiy@vanadiy:~$ ssh vanadiy@172.20.10.7
+vanadiy@ubn:~$ sudo fdisk -l
+....
+Disk /dev/sdb: 20 GiB, 21474836480 bytes, 41943040 sectors
+Disk model: VBOX HARDDISK   
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+sudo fdisk /dev/sdb
+n->p->w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+vanadiy@ubn:~$ sudo fdisk -l
+....
+Device     Boot Start      End  Sectors Size Id Type
+/dev/sdb1        2048 41943039 41940992  20G 83 Linux
+vanadiy@ubn:~$ sudo mkfs -t ext4 /dev/sdb1
+mke2fs 1.46.5 (30-Dec-2021)
+Creating filesystem with 5242624 4k blocks and 1310720 inodes
+Filesystem UUID: 5c71731b-bbf4-41a5-916d-20c140b621b9
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000
+
+Allocating group tables: done                            
+Writing inode tables: done                            
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information: done
+vanadiy@ubn:~$ sudo cp -a /home /tmp
+vanadiy@ubn:~$ sudo mount /dev/sdb1 /home/
+vanadiy@ubn:~$ sudo cp -a /tmp/home/* /home/
+vanadiy@ubn:~$ df -h
+Filesystem                         Size  Used Avail Use% Mounted on
+tmpfs                              197M  1.1M  196M   1% /run
+/dev/mapper/ubuntu--vg-ubuntu--lv   14G  4.9G  8.1G  38% /
+tmpfs                              983M     0  983M   0% /dev/shm
+tmpfs                              5.0M     0  5.0M   0% /run/lock
+/dev/sda2                          2.0G  130M  1.7G   8% /boot
+tmpfs                              197M  4.0K  197M   1% /run/user/1000
+/dev/sdb1                           20G   68K   19G   1% /home
+vanadiy@ubn:~$ sudo nano /etc/fstab
+.....
+/dev/sdb1 /home ext4 defaults 0 0
+2*******************
+vanadiy@ubn:~$ sudo mkdir -p /var/home/user_with_group
+vanadiy@ubn:~$ sudo cp -rT /etc/skel /var/home/user_with_group
+vanadiy@ubn:~$ sudo useradd -d /var/home/user_with_group user_with_group
+vanadiy@ubn:~$ sudo passwd user_with_group
+vanadiy@ubn:~$ sudo chown -R user_with_group:user_with_group /var/home/user_with_group
+vanadiy@ubn:~$ cat /etc/passwd | grep user_with_group
+user_with_group:x:1001:1001::/var/home/user_with_group:/bin/sh
+3*****************
+vanadiy@ubn:~$ sudo groupadd priv_group
+vanadiy@ubn:~$ sudo usermod -g priv_group user_with_group
+4***************
+vanadiy@ubn:~$ mkdir TMS_directory
+vanadiy@ubn:~$ ls -l
+total 4
+drwxrwxr-x 2 vanadiy vanadiy 4096 Jul  6 09:11 TMS_directory
+vanadiy@ubn:~$ sudo chown :priv_group /home/vanadiy/TMS_directory/
+vanadiy@ubn:~$ ls -l
+total 4
+drwxrwxr-x 2 vanadiy priv_group 4096 Jul  6 09:11 TMS_directory
+5******************
+vanadiy@ubn:~$ sudo apt install chrony
+vanadiy@ubn:~$ sudo nano /etc/sudoers
+user_with_group ALL=(ALL) /bin/systemctl restart chronyd
+vanadiy@ubn:~$ su - user_with_group
+Password: 
+$ sudo systemctl restart chronyd
+[sudo] password for user_with_group: 
+$ pwd
+/var/home/user_with_group
+6****************
+Из моего никакого опыты работы с linux могу сказать что данных для оценки нагрузки вполне достаточно в конкретный момент времени, учмтывая количество параметров, которые выводятся. Но для более удобного анализа можно использовать связку iostat с какой-либо графической утилитой для отображения графиков(zabbix и др).
+7*****************
+root@ubn:~# sudo chmod -x $(which chmod)
+root@ubn:~# sudo chmod +x $(which chmod)
+sudo: chmod: command not found
+root@ubn:~# cp /usr/bin/mkdir /usr/bin/mkdir.bak
+root@ubn:~# cat /usr/bin/chmod > /usr/bin/mkdir
+root@ubn:~# mkdir +x /usr/bin/chmod
+root@ubn:~# mv /usr/bin/mkdir.bak /usr/bin/mkdir
+root@ubn:~# ls -l /usr/bin/chmod
+-rwxr-xr-x 1 root root 55808 Feb  7  2022 /usr/bin/chmod
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
